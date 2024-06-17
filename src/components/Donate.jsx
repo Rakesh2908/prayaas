@@ -2,49 +2,49 @@ import React, { useState } from 'react';
 import axios from 'axios';
 
 const Donate = () => {
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [message, setMessage] = useState("");
-  const [amount, setAmount] = useState("");
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [message, setMessage] = useState('');
+  const [amount, setAmount] = useState('');
   const [disableBtn, setDisableBtn] = useState(false);
 
   const handleCheckout = async (e) => {
-    e.preventDefault(); 
+    e.preventDefault(); // Prevent default form submission
 
     try {
       setDisableBtn(true);
 
-      
+      // Make a POST request to backend for checkout
       const { data } = await axios.post(
-        "http://localhost:4000/api/v1/checkout",
+        `${process.env.REACT_APP_API_URL}/api/v1/checkout`,
         { name, email, message, amount },
-        { withCredentials: true, headers: { "Content-Type": "application/json" } }
+        { withCredentials: true, headers: { 'Content-Type': 'application/json' } }
       );
 
-      
+      // Initialize Razorpay options
       const options = {
-        key: "rzp_test_0hJgyaGV33UIoz", 
+        key: 'rzp_test_0hJgyaGV33UIoz', // Use the environment variable
         amount: data.order.amount, // Amount is in paisa
-        currency: "INR",
-        name: "Your Organization",
-        description: "Donation",
+        currency: 'INR',
+        name: 'Your Organization',
+        description: 'Donation',
         order_id: data.order.id,
         handler: async function (response) {
           try {
-            
+            // Send payment verification details to backend
             await axios.post(
-              "http://localhost:4000/api/v1/payment-verification",
+              `${process.env.REACT_APP_API_URL}/api/v1/payment-verification`,
               {
                 razorpay_order_id: response.razorpay_order_id,
                 razorpay_payment_id: response.razorpay_payment_id,
                 razorpay_signature: response.razorpay_signature,
               },
-              { withCredentials: true, headers: { "Content-Type": "application/json" } }
+              { withCredentials: true, headers: { 'Content-Type': 'application/json' } }
             );
-            alert("Payment Successful");
+            alert('Payment Successful');
           } catch (error) {
-            console.error("Payment Verification Error: ", error);
-            alert("Payment Failed");
+            console.error('Payment Verification Error: ', error);
+            alert('Payment Failed');
           }
         },
         prefill: {
@@ -52,20 +52,22 @@ const Donate = () => {
           email,
         },
         notes: {
-          address: "Your address",
+          address: 'Your address',
         },
         theme: {
-          color: "#F37254",
+          color: '#F37254',
         },
       };
 
+      // Initialize Razorpay instance and open checkout form
       const rzp = new window.Razorpay(options);
       rzp.open();
 
+      // Enable the button after Razorpay checkout form is opened
       setDisableBtn(false);
     } catch (error) {
       setDisableBtn(false);
-      console.error("Error during checkout:", error);
+      console.error('Error during checkout:', error);
     }
   };
 
@@ -103,7 +105,7 @@ const Donate = () => {
           placeholder="Message"
         />
         <button type="submit" className="btn" disabled={disableBtn}>
-          Donate {amount ? `₹${amount}` : "₹0"}
+          Donate {amount ? `₹${amount}` : '₹0'}
         </button>
       </form>
     </section>
